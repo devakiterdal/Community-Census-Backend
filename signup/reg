@@ -1,0 +1,192 @@
+class userSerializer(serializers.ModelSerializer):
+    #   token = uuid.uuid4()         
+    # password2 = serializers.CharField(style={'input_type' : 'password'},write_only=True) 
+    class Meta:
+        model = account
+        fields = ['username','email','first_name','last_name','password']
+
+        extra_kwargs = {
+            'password': {'write_only' : True}
+        }
+    
+
+    def save(self):
+        
+        acc = account(
+            username = self.validated_data['username'],
+            email = self.validated_data['email'],
+            first_name = self.validated_data['first_name'],
+            last_name = self.validated_data['last_name'],
+           password = self.validated_data['password']
+
+        )
+        acc.save()
+        return acc
+class account(models.Model):
+    unique_id = models.UUIDField()
+    username = models.TextField()
+    email = models.TextField()
+    first_name = models.TextField()
+    last_name = models.TextField()
+    password = models.TextField()
+    
+
+
+
+    from django.db import models
+import uuid
+class account(models.Model): 
+    username = models.CharField(max_length=30)
+    email = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    password = models.CharField(max_length=8)
+    # unique_id = models.UUIDField(null = True)
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+
+
+
+            # password2 = self.validated_data['password2']
+
+        # if password != password2:
+        #     raise serializers.ValidationError({'password' : 'password must be same'})
+
+        # acc.set_password(password)
+
+        # user = User.objects.create_user(acc.username,acc.email,acc.password)
+        # user.first_name = acc.first_name
+        # user.last_name = acc.last_name
+        #    user.save()
+        # token = uuid.uuid4() 
+        
+       
+        
+        # token = Token.objects.create(acc=acc)
+
+    # def data_validation(self):
+    #     user = User.objects.create_user(username,email,password)
+    #     user.first_name = acc.first_name
+    #     user.last_name = acc.last_name
+
+        # acc = user.data_validation()
+        
+    
+
+        # return Response({'My Generated Token' + token})
+        # print(token)
+       
+
+
+# class UserLoginSerializer(serializers.ModelSerializer):
+    
+#     class Meta:
+#         model = account
+#         fields = ['username','password']
+#         extra_kwargs={"password": {"write_only":True}
+#         }
+#     username = serializers.CharField()
+#     password = serializers.CharField()
+
+#     def validate(self,data):
+#         username = data.get("username","")
+#         # email = data.get("email","")
+#         password = data.get("password","")
+
+#         # if not email or not username:
+#         #     raise ValidationError("Email and Username are Required.")
+
+#         # user = User.objects.filter(
+#         #     Q(email=email) &
+#         #     Q(username=username).distinct()
+#         # )
+
+#         if  username and password:
+#             user = authenticate(username=username,password=password)
+#             if user:
+#                 # print("User Present")
+#                 if user.is_active:
+#                     data["user"]=user
+#                 else:
+#                     raise ValidationError("is not active")
+                    
+#             else:
+#                 raise ValidationError("Incorrect Credentials")
+#         else:
+#             raise ValidationError("Email and Username are Required.")
+
+#         return data
+#         # if user_obj:
+#         #     if not user_obj.check_password(password):
+#         #         raise ValidationError("Incorrect password")
+
+# class subClass(AbstractBaseUser):
+#     def s(self,user_obj,password):
+#         if not user_obj.check_password(password):
+#             raise ValidationError("password required")    
+#         print("****************************************************************")
+
+
+#   token = uuid.uuid4()         
+    # password2 = serializers.CharField(style={'input_type' : 'password'},write_only=True) 
+    # instance_obj = None
+
+
+
+     @api_view(['POST',])
+# def login(request):
+#     if request.method == 'POST':
+#         serializer = UserLoginSerializer(data=request.data)
+#         data = {}
+#         if serializer.is_valid(raise_exception=True):
+# #         serializer.is_valid(raise_exception=True)
+#             new_data = serializer.data
+# #         user = serializer.validated_data["user"]
+# #         django_login(request,user)
+#             # token, created = Token.objects.get_or_create(data=data)
+#         return Response({"token":"NewRandom"},status=200)
+#         # return Response({"token":token.key},new_data,status=200)
+#         # return data
+# class CustomAuthToken(ObtainAuthToken):
+#     def post(self, request, *args, **kwargs):
+#         serializer = self.serializer_class(data=request.data,
+#                                            context={'request': request})
+#         serializer.is_valid(raise_exception=True)
+#         user = serializer.validated_data['user']
+#         token, created = Token.objects.get_or_create(user=user)
+#         return Response({
+#             'token': token.key,
+#             'user_id': user.pk,
+#             'email': user.email
+#         })
+
+#login
+# user = serializer.validated_data['user']
+            # token, created = Token.objects.get_or_create(user=user)
+            # return Response({
+            #     'token': token.key,
+            #     'username': user.username,
+            #     'email': user.email
+            # })
+            # creating an instance of 
+            #uuid object 
+            # obj = uuid.uuid4() 
+        
+            # creating a instance of  
+            # GeeksModel 
+            # instance_obj = account.objects.create(unique_id = obj) 
+            # instance_obj.save() 
+            # print(instance_obj)
+
+
+            # for user in account.objects.all():
+            #     token,created = Token.objects.get_or_create(user=user)
+            #     return Response({"token":Token.key},status=200)
+# token = Token.objects.create(user=data)
+            # creating an instance of 
+            # uuid object 
+            # obj = uuid.uuid4() 
+            # # creating a instance of      
+            # instance_obj = account.objects.create(unique_id = obj) 
+            # instance_obj.save() 
+            # print(instance_obj)
