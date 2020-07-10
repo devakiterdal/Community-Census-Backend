@@ -53,11 +53,13 @@ from . serializers import ProfileAPI
 #content_feed
 from signup.models import posts
 from rest_framework import status, viewsets
-from signup.api.serializers import contentfeedSerializer
+from signup.api.serializers import PostsSerializerWithoutPostId, contentfeedSerializer
 from datetime import datetime
 
 #POSTDELETEAPIVIEW
 from rest_framework.generics import UpdateAPIView,RetrieveAPIView,DestroyAPIView
+
+from django.db.models import Count
 @api_view(['POST',])
 def register(request):
     if request.method == 'POST':
@@ -73,58 +75,58 @@ def register(request):
             data['unique_id'] = acc.unique_id
         else:
             data = serializer.errors
-        return Response(data)        
-    
-# def registerPage(request):
-#     return render(request, 'register.html')
-        # return Response({"token":Token.key},status=200)
+        return Response(data)   
 
-class createAPIView(CreateAPIView):
-    serializer = UserLoginSerializer
-    queryset = models.account.objects.all()
-
-    def post(self,request,*args,**kwargs):
-        data = request.data
-        serializer = UserLoginSerializer(data = data)
-        if serializer.is_valid(raise_exception=True):
-            new_data = serializer.data
-            print(request.session.get_expiry_age())
-            print(request.session.get_expiry_date())
-            return Response(new_data,status=HTTP_200_OK)
-        return Response(serializer.errors,status=HTTP_400_BAD_REQUEST)
-
-
+#user_login
 @api_view(['POST',])
-def profileView(request):
+def login(request):
     if request.method == 'POST':
-        serializer = ProfileAPI(data=request.data)
+        serializer = UserLoginSerializer(data=request.data)
+        data = {}
+        if serializer.is_valid():
+            newData = serializer.data
+        else:
+            data = serializer.errors
+        return Response(newData)  
+
+   
+@api_view(['GET',])
+def getMyProfile(request, email):
+
+    try:
+        email = profile.objects.filter(email=email)
+    except profile.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        serializer = ProfileAPI(email,many=True)
+        return Response(serializer.data)
+
+@api_view(['PUT',])
+def updateMyProfile(request, email):
+
+    try:
+        email = profile.objects.filter(email=email).first()
+    except profile.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        serializer = ProfileAPI(email, data=request.data)
         info = {}
         if serializer.is_valid():
-            profileData = serializer.save()
-            info['response'] = "Profile created."
-            info['first_name'] = profileData.first_name
-            info['last_name'] = profileData.last_name
-            info['father_name'] = profileData.father_name
-            info['mother_name'] = profileData.mother_name
-            info['birthdate'] = profileData.birthdate
-            info['gender'] = profileData.gender
-            info['phoneno'] = profileData.phoneno
-            info['email'] = profileData.email
-            info['city'] = profileData.city
-            info['state'] = profileData.state
-            info['country'] = profileData.country
-            info['pincode'] = profileData.pincode
+            serializer.save()
+            info['response'] = "Profile updated."
         else:
-            info =serializer.errors
-        return Response(info)   
+            info = serializer.errors
+        return Response(info)  
 
-#content_feed_view
+#view_generic_posts
 @api_view(['GET','POST',])
-def content_feed(request):
+def genericPosts(request):
     #content_feed_fetching
+    queryset = models.posts.objects.all()
     if request.method == 'GET':
-        fetchcontent = models.posts.objects.all()
-        serializer = contentfeedSerializer(fetchcontent, many=True)
+        serializer = contentfeedSerializer(queryset, many=True)
         return Response(serializer.data)
         
     #content_feed_inserting
@@ -134,48 +136,70 @@ def content_feed(request):
         if serializer.is_valid():
             contentdata = serializer.save()
             contentinfo['response'] = "Content feeded."
-            contentinfo['post_id'] = contentdata.post_id
             contentinfo['description'] = contentdata.description
             contentinfo['post_time'] = contentdata.post_time
-        else:
-            contentinfo = serializer.errors
-        return Response(contentinfo)  
+            contentinfo['post_id'] = contentdata.post_id
+            contentinfo['username'] = contentdata.username.username
+            return Response(contentinfo)  
+        return Response(serializer.errors,status=HTTP_400_BAD_REQUEST)
 
-@api_view(['GET','POST','DELETE',])
-def content_feed_pk(request,post_id):
+#My_Post_ GET
+@api_view(['GET',])
+def get_myPost(request, username):
     try:
-        post = posts.objects.get(post_id=post_id)
+        myPost = posts.objects.filter(username=username)
     except posts.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    #content_feed_fetching
+    
     if request.method == 'GET':
-        fetchcontent = models.posts.objects.all()
-        serializer = contentfeedSerializer(fetchcontent, many=True)
+        serializer = contentfeedSerializer(myPost,many=True)
         return Response(serializer.data)
-        
-    #content_feed_inserting
-    elif request.method == 'POST':
-        serializer = contentfeedSerializer(data=request.data)
-        contentinfo = {}
-        if serializer.is_valid():
-            contentdata = serializer.save()
-            contentinfo['response'] = "Content feeded."
-            contentinfo['post_id'] = contentdata.post_id
-            contentinfo['description'] = contentdata.description
-            contentinfo['post_time'] = contentdata.post_time
-        else:
-            contentinfo = serializer.errors
-        return Response(contentinfo)  
+    # return Response(serializer.errors, status=HTTP_204_NO_CONTENT)
 
+@api_view(['DELETE',])
+def delete_mypost(request,post_id):
+    try:
+        post = models.posts.objects.get(post_id=post_id)
+    except models.posts.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
     #POST DELETE 
-    elif request.method == 'DELETE':
-        # serializer = contentfeedSerializer(data=request.data)
-        # contentinfo = {}
-        # if serializer.is_valid():
-        post.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    if request.method == 'DELETE':
+        deleted_post = post.delete()
+    return Response("Post not exist",status=status.HTTP_204_NO_CONTENT)
 
+@api_view(['PUT',])
+def update_myPost(request, post_id):
+    try:
+        myPost = posts.objects.get(post_id=post_id)
+    except posts.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
+    if request.method == 'PUT':
+        serializer = PostsSerializerWithoutPostId(myPost, data=request.data)
+        data={}
+        if serializer.is_valid():
+            serializer.save()
+            data['response'] = "Updated successfully"
+            return Response(data=data)
+        return Response(serializer.errors, status=status.HTTP_204_NO_CONTENT)
 
+# #Get_Count_Of_Users ---------------------------------- working status
+@api_view(['GET',])
+def no_of_users_registerd(request):
+    if request.method == 'GET':
+        total_users = account.objects.count()
+        return Response(int(total_users))
 
- 
+#female
+@api_view(['GET',])
+def no_of_females(request):
+    if request.method == 'GET':
+        total_users = profile.objects.filter(gender='f').count()
+        return Response(int(total_users))
+
+#male
+@api_view(['GET',])
+def no_of_males(request):
+    if request.method == 'GET':
+        total_users = profile.objects.filter(gender='m').count()
+        return Response(int(total_users))
